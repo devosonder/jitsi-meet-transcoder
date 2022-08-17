@@ -1,0 +1,32 @@
+[package]
+name = "gst-meet"
+description = "A tool for connecting GStreamer pipelines to Jitsi Meet conferences"
+version = "0.4.1"
+edition = "2021"
+license = "MIT/Apache-2.0"
+authors = ["Jasper Hugo <jasper@avstack.io>"]
+
+[dependencies]
+anyhow = { version = "1", default-features = false, features = ["std"] }
+colibri = { version = "0.1", default-features = false }
+futures = { version = "0.3", default-features = false }
+glib = { version = "0.15", default-features = false, features = ["log"] }
+gstreamer = { version = "0.18", default-features = false, features = ["v1_20"] }
+http = { version = "0.2", default-features = false }
+lib-gst-meet = { version = "0.6", path = "../lib-gst-meet", default-features = false, features = ["tracing-subscriber"] }
+structopt = { version = "0.3", default-features = false }
+tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
+tokio-stream = { version = "0.1", default-features = false }
+tracing = { version = "0.1", default-features = false, features = ["attributes", "std"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = { version = "0.24", default-features = false }
+
+[features]
+default = ["tls-rustls-native-roots"]
+log-rtp = ["lib-gst-meet/log-rtp"]
+tls-insecure = ["lib-gst-meet/tls-insecure"]
+tls-native = ["lib-gst-meet/tls-native"]
+tls-native-vendored = ["lib-gst-meet/tls-native-vendored"]
+tls-rustls-native-roots = ["lib-gst-meet/tls-rustls-native-roots"]
+tls-rustls-webpki-roots = ["lib-gst-meet/tls-rustls-webpki-roots"]
