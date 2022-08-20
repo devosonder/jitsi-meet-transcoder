@@ -13,7 +13,7 @@ FROM docker.io/library/alpine:edge AS builder1
 
 COPY ./streaming-service-bridge  ./streaming-service-bridge
 WORKDIR ./streaming-service-bridge
-
+RUN apk add --update qemu-x86_64
 RUN apk --no-cache add gstreamer-dev gst-plugins-base-dev 
 RUN apk --no-cache add build-base libnice-dev openssl-dev cargo
 RUN cargo build --release -p gst-meet
