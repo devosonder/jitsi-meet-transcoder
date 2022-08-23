@@ -554,24 +554,30 @@ impl JingleSession {
       .context("no local ICE credentials")?;
 
     debug!("building gstreamer pipeline");
+    println!("noeeeeet able to reach herw");
 
     let pipeline = gstreamer::Pipeline::new(None);
+    println!("noeeeeetfff able to reach herw");
 
     let rtpbin = gstreamer::ElementFactory::make("rtpbin", Some("rtpbin"))?;
+    
+    println!("noeerrrrrrrrrrrrrrreeet able to reach herw");
+
     rtpbin.set_property_from_str("rtp-profile", "savpf");
     rtpbin.set_property("autoremove", true);
     rtpbin.set_property("do-lost", true);
     rtpbin.set_property("do-sync-event", true);
     pipeline.add(&rtpbin)?;
     
+    println!("not able to reach herw");
 
     let nicesrc = gstreamer::ElementFactory::make("nicesrc", None)?;
     nicesrc.set_property("stream", ice_stream_id);
     nicesrc.set_property("component", ice_component_id);
     nicesrc.set_property("agent", &ice_agent);
     pipeline.add(&nicesrc)?;
+    println!("not able to reach her222222222222222222222");
 
-    debug!("not able to reach herw");
 
     let nicesink = gstreamer::ElementFactory::make("nicesink", None)?;
     nicesink.set_property("stream", ice_stream_id);
@@ -586,7 +592,6 @@ impl JingleSession {
     dtlssrtpenc.set_property("is-client", true);
     pipeline.add(&dtlssrtpenc)?;
 
-        debug!("not able to reach her222222222222222222222");
 
     let dtlssrtpdec = gstreamer::ElementFactory::make("dtlssrtpdec", None)?;
     dtlssrtpdec.set_property("connection-id", dtls_srtp_connection_id);
