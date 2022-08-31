@@ -235,6 +235,7 @@ dependencies = [
  "envfile",
  "futures",
  "jsonwebtoken",
+ "libc",
  "reqwest",
  "rust-crypto",
  "serde",
