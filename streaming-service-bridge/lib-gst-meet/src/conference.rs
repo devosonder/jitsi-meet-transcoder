@@ -109,7 +109,7 @@ pub struct JitsiConference {
   pub(crate) inner: Arc<Mutex<JitsiConferenceInner>>,
   pub(crate) tls_insecure: bool,
 }
-
+\
 impl fmt::Debug for JitsiConference {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.debug_struct("JitsiConference")
