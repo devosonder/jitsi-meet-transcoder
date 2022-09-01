@@ -4,6 +4,9 @@ use serde_json::json;
 use std::env;
 use reqwest::Client;
 
+use rand::{thread_rng, RngCore};
+use random_string::generate;
+
 #[derive(Deserialize, Debug)]
 struct Gist {
     token: String,
@@ -15,7 +18,6 @@ use futures::{
   sink::{Sink, SinkExt},
   stream::{Stream, StreamExt, TryStreamExt},
 };
-use rand::{thread_rng, RngCore};
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_tungstenite::tungstenite::{
@@ -90,9 +92,8 @@ impl Connection {
   ) -> Result<(Self, impl Future<Output = ()>)> {
     let websocket_url: Uri = websocket_url.parse().context("invalid WebSocket URL")?;
     let xmpp_domain: BareJid = xmpp_domain.parse().context("invalid XMPP domain")?;
-
     let gist_body = json!({
-      "apiKey": "27fd6f8080d512442a3694f461adb3986cda5ba39dbe368d75"
+      "apiKey": "27fd6f9e85c304447d3cc0fb31e7ba8062df58af86ac3f9437"
     });
 
     let request_url = "https://api.sariska.io/api/v1/misc/generate-token";
@@ -107,7 +108,9 @@ impl Connection {
 
     info!("Connecting XMPP WebSocket to {}", websocket_url_with_token);
     let mut key = [0u8; 16];
+
     thread_rng().fill_bytes(&mut key);
+
     let request = Request::get(&websocket_url_with_token)
       .header("sec-websocket-protocol", "xmpp")
       .header("sec-websocket-key", base64::encode(&key))
@@ -278,7 +281,8 @@ impl Connection {
           locked_inner.state = ReceivingFeaturesPostAuthentication;
         },
         ReceivingFeaturesPostAuthentication => {
-          let iq = Iq::from_set(generate_id(), BindQuery::new(None));
+          let charset = "1234567890";
+          let iq = Iq::from_set(generate_id(), BindQuery::new(Some(format!("{}_{}", "pricing_new",  generate(6, charset).to_string()).to_uppercase())));
           tx.send(iq.into()).await?;
           locked_inner.state = Binding;
         },
