@@ -121,7 +121,7 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         // .expect("failed to execute process");
         let child = Command::new("sh")
         .arg("-c")
-        .arg(GST_MEET_PARAMS_AUDIO_AND_VIDEO)
+        .arg(GST_MEET_PARAMS_LIVESTREAM)
         .spawn()
         .expect("failed to execute process");
          child_processes.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
