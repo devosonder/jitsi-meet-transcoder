@@ -15,7 +15,7 @@ use lib_gst_meet::{
 };
 use structopt::StructOpt;
 use tokio::{signal::ctrl_c, task, time::timeout};
-use tracing::{error, info, trace, warn};
+use tracing::{info, trace, warn};
 
 #[derive(Debug, Clone, StructOpt)]
 #[structopt(
@@ -430,7 +430,7 @@ async fn main_inner() -> Result<()> {
           }
 
           if let Some(video_sink_element) = bin.by_name("video") {
-            let  = video_sink_element.static_pad("sink").context(
+            let sink_pad = video_sink_element.static_pad("sink").context(
               "video sink element in recv pipeline participant template has no sink pad",
             )?;
             bin.add_pad(&GhostPad::with_target(Some("video"), &sink_pad)?)?;
