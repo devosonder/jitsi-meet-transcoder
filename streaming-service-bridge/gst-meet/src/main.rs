@@ -490,13 +490,3 @@ async fn main_inner() -> Result<()> {
 
   Ok(())
 }
-
-
-
-
-
-
-
-// ../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket --xmpp-domain=sariska.io --muc-domain=muc.sariska.io --room-name=roomname \
-//          --video-codec=vp9 \
-//          --recv-pipeline-participant-template="flvmux name=muxer ! queue ! filesink location=rtmp://a.rtmp.youtube.com/live2/qdr1-d1ju-e078-m2fh-amuk opusenc name=audio ! muxer.audio_0 vp9enc name=video ! muxer.video_0"
