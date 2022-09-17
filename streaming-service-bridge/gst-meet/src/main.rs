@@ -214,12 +214,17 @@ async fn main_inner() -> Result<()> {
     .transpose()
     .context("failed to parse send pipeline")?;
 
+    println!("{:?}recv_pipelinerecv_pipelinerecv_pipeline", opt.recv_pipeline);
+
   let recv_pipeline = opt
     .recv_pipeline
     .as_ref()
     .map(|pipeline| gstreamer::parse_bin_from_description(pipeline, false))
     .transpose()
     .context("failed to parse recv pipeline")?;
+
+  println!("{:?}recv_pipelinerecv_pipelinerecv_pipeline", recv_pipeline);
+
 
   let web_socket_url: Uri = opt.web_socket_url.parse()?;
 
@@ -425,7 +430,7 @@ async fn main_inner() -> Result<()> {
           }
 
           if let Some(video_sink_element) = bin.by_name("video") {
-            let sink_pad = video_sink_element.static_pad("sink").context(
+            let  = video_sink_element.static_pad("sink").context(
               "video sink element in recv pipeline participant template has no sink pad",
             )?;
             bin.add_pad(&GhostPad::with_target(Some("video"), &sink_pad)?)?;
@@ -485,3 +490,13 @@ async fn main_inner() -> Result<()> {
 
   Ok(())
 }
+
+
+
+
+
+
+
+../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket --xmpp-domain=sariska.io --muc-domain=muc.sariska.io --room-name=roomname \
+         --video-codec=vp9 \
+         --recv-pipeline-participant-template="flvmux name=muxer ! queue ! filesink location=rtmp://a.rtmp.youtube.com/live2/qdr1-d1ju-e078-m2fh-amuk opusenc name=audio ! muxer.audio_0 vp9enc name=video ! muxer.video_0"

@@ -9,10 +9,21 @@ use actix_web::{http::header::ContentType};
 use futures::future::{err, ok, Ready};
 use actix_web::error::ErrorUnauthorized;
 use std::process::Command;
-static GST_MEET_PARAMS_AUDIO_ONLY: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --room-name=test124    --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io";
-static GST_MEET_PARAMS_AUDIO_AND_VIDEO: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io  --room-name=roomname  --recv-video-scale-width=640  --recv-video-scale-height=360 --recv-pipeline=audiomixer name=audio ! autoaudiosink compositor name=video sink_1::xpos=640 ! rtmpsink location=rtmp://a.rtmp.youtube.com/live2/qdr1-d1ju-e078-m2fh-amuk";
-static GST_MEET_PARAMS_LIVESTREAM: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --room-name=test    --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io";
-static GST_MEET_PARAMS_LIVESTREAM_AND_RECORDING: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --room-name=test    --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io";
+static GST_MEET_PARAMS_AUDIO_AND_VIDEO: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io  --room-name=roomname     --recv-pipeline='compositor name=video ! videoconvert ! queue ! x264enc ! mpegtsmux ! filesink location=testvideo.mp4'";
+static GST_MEET_PARAMS_LIVESTREAM: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
+--xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
+ --recv-video-scale-width=640 \
+ --recv-video-scale-height=360 \
+ --room-name=roomname  \
+ --recv-pipeline='compositor name=video sink_1::xpos=640 \
+    ! queue \
+    ! x264enc cabac=1 bframes=2 ref=1 \
+    ! video/x-h264,profile=main \
+    ! flvmux streamable=true name=mux \
+    ! rtmpsink location=rtmp://a.rtmp.youtube.com/live2/ke3c-2g4f-kwy4-9vxq-281m \
+    audiotestsrc is-live=1 wave=ticks \
+       ! mux.'";
+
 use std::process::Child;
 use std::sync::Mutex;
 use std::{collections::HashMap, pin::Pin, sync::RwLock};
