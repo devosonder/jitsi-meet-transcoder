@@ -10,7 +10,7 @@ use futures::future::{err, ok, Ready};
 use actix_web::error::ErrorUnauthorized;
 use std::process::Command;
 static GST_MEET_PARAMS_AUDIO_AND_VIDEO: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket  --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io  --room-name=roomname     --recv-pipeline='compositor name=video ! videoconvert ! queue ! x264enc ! mpegtsmux ! filesink location=testvideo.mp4'";
-static GST_MEET_PARAMS_LIVESTREAM: &str = "../streaming-service-bridge/target/debug/gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
+static GST_MEET_PARAMS_LIVESTREAM: &str = "./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
 --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
  --recv-video-scale-width=640 \
  --recv-video-scale-height=360 \
@@ -130,6 +130,8 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         // let hello = output.stdout;
 
         // println!("qwnenqwnenwq enqwne nqwen {:?}", output);
+
+        
 
         HttpResponse::Ok().json("{}")
 }
