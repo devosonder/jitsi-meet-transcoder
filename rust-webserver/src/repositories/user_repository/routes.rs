@@ -20,7 +20,7 @@ static GST_MEET_PARAMS_LIVESTREAM: &str = "../streaming-service-bridge/target/de
     ! x264enc cabac=1 bframes=2 ref=1 \
     ! video/x-h264,profile=main \
     ! flvmux streamable=true name=mux \
-    ! rtmpsink location=rtmp://a.rtmp.youtube.com/live2/ke3c-2g4f-kwy4-9vxq-281m \
+    ! rtmpsink location=rtmp://43.205.21.202:1935/app/jitsistream \
     audiotestsrc is-live=1 wave=ticks \
        ! mux.'";
 
