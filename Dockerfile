@@ -21,6 +21,7 @@ WORKDIR ./streaming-service-bridge
 RUN cargo build --release -p gst-meet
 
 FROM docker.io/library/alpine:edge
+RUN USER=root
 RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
  && apk --no-cache add curl \
  && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav \
