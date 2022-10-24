@@ -1,5 +1,4 @@
 
-
 FROM ekidd/rust-musl-builder:stable as builder
 RUN USER=root cargo new --bin actix-web-docker-example
 
@@ -10,32 +9,32 @@ RUN cargo build --release
 RUN rm -r ./target/x86_64-unknown-linux-musl/release/deps
 RUN cargo build --release
 
-RUN USER=root
 FROM docker.io/library/alpine:edge AS builder1
-RUN apk --no-cache --update upgrade --ignore alpine-baselayout \
- && apk --no-cache add curl \
- && apk --no-cache add gstreamer-dev gst-plugins-base-dev \
- && apk --no-cache add build-base libnice-dev openssl-dev cargo
- 
+
 COPY ./streaming-service-bridge  ./streaming-service-bridge
 WORKDIR ./streaming-service-bridge
-
+RUN apk --no-cache add gstreamer-dev gst-plugins-base-dev 
+RUN apk --no-cache add build-base openssl-dev cargo libnice-dev
 RUN cargo build --release -p gst-meet
 
-RUN USER=root
 FROM docker.io/library/alpine:edge
-RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
- && apk --no-cache add curl \
- && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav \
- && apk --no-cache add libnice openssl
+RUN apk update
+RUN apk add --no-cache autoconf automake gnutls-dev gtk-doc libtool
 
+RUN apk --no-cache add curl
 RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
+RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugins-base
+RUN apk --no-cache add libnice openssl libnice
+RUN git clone https://github.com/libnice/libnice.git \
+    && cd libnice \
+    && ./autogen.sh --prefix=/usr --with-gstreamer --enable-static --enable-static-plugins --enable-shared --without-gstreamer-0.10 --disable-gtk-doc \
+    && make install \
+    && cd / 
 
 RUN mkdir -p /home/appuser/.config/rclone/
-
 
 ENV RCLONE_VER=v1.59.1 \
     ARCH=amd64 \
