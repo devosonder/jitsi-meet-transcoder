@@ -1,5 +1,5 @@
 
-USER root
+
 FROM ekidd/rust-musl-builder:stable as builder
 RUN USER=root cargo new --bin actix-web-docker-example
 
