@@ -1,4 +1,5 @@
 
+USER root
 FROM ekidd/rust-musl-builder:stable as builder
 RUN USER=root cargo new --bin actix-web-docker-example
 
@@ -9,6 +10,7 @@ RUN cargo build --release
 RUN rm -r ./target/x86_64-unknown-linux-musl/release/deps
 RUN cargo build --release
 
+RUN USER=root
 FROM docker.io/library/alpine:edge AS builder1
 RUN apk --no-cache --update upgrade --ignore alpine-baselayout \
  && apk --no-cache add curl \
@@ -20,8 +22,8 @@ WORKDIR ./streaming-service-bridge
 
 RUN cargo build --release -p gst-meet
 
-FROM docker.io/library/alpine:edge
 RUN USER=root
+FROM docker.io/library/alpine:edge
 RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
  && apk --no-cache add curl \
  && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav \
