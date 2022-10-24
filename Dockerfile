@@ -21,7 +21,7 @@ FROM docker.io/library/alpine:edge
 RUN apk update
 RUN apk add --no-cache autoconf automake gnutls-dev gtk-doc libtool
 
-RUN apk --no-cache add curl
+RUN apk --no-cache add curl git
 RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
