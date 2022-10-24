@@ -26,7 +26,7 @@ RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
 RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugins-base 
-RUN apk --no-cache add libnice openssl libnice-gstreamer
+RUN apk --no-cache add libnice libnice-dev openssl
 
 
 RUN mkdir -p /home/appuser/.config/rclone/
