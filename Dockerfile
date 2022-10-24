@@ -27,10 +27,10 @@ RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
 RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugins-base
-RUN apk --no-cache add libnice openssl
+RUN apk --no-cache add libnice openssl autoconf
 RUN git clone https://github.com/libnice/libnice.git \
     && cd libnice \
-    && ./configure  --prefix=/usr --with-gstreamer --enable-static --enable-static-plugins --enable-shared --without-gstreamer-0.10 --disable-gtk-doc \
+    && ./autogen.sh  --prefix=/usr --with-gstreamer --enable-static --enable-static-plugins --enable-shared --without-gstreamer-0.10 --disable-gtk-doc \
     && make install \
     && cd / 
 
