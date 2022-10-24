@@ -26,7 +26,7 @@ RUN USER=root
 FROM docker.io/library/alpine:edge
 RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
  && apk --no-cache add curl \
- && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav \
+ && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gstreamer1.0-nice \
  && apk --no-cache add libnice openssl
 
 RUN apk --no-cache add sed
