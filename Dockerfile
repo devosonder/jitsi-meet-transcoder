@@ -19,20 +19,15 @@ RUN cargo build --release -p gst-meet
 
 FROM docker.io/library/alpine:edge
 RUN apk update
-RUN apk add --no-cache autoconf automake gnutls-dev gtk-doc libtool
 
-RUN apk --no-cache add curl git  automake autoconf libtool
+RUN apk --no-cache add curl 
 RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
-RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugins-base
-RUN apk --no-cache add libnice openssl autoconf
-RUN git clone https://github.com/libnice/libnice.git \
-    && cd libnice \
-    && ./autogen.sh  --prefix=/usr --with-gstreamer --enable-static --enable-static-plugins --enable-shared --without-gstreamer-0.10 --disable-gtk-doc \
-    && make install \
-    && cd / 
+RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugins-base 
+RUN apk --no-cache add libnice openssl libnice-gstreamer
+
 
 RUN mkdir -p /home/appuser/.config/rclone/
 
