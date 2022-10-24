@@ -10,22 +10,26 @@ RUN rm -r ./target/x86_64-unknown-linux-musl/release/deps
 RUN cargo build --release
 
 FROM docker.io/library/alpine:edge AS builder1
-
+RUN apk --no-cache --update upgrade --ignore alpine-baselayout \
+ && apk --no-cache add curl \
+ && apk --no-cache add gstreamer-dev gst-plugins-base-dev \
+ && apk --no-cache add build-base libnice-dev openssl-dev cargo
+ 
 COPY ./streaming-service-bridge  ./streaming-service-bridge
 WORKDIR ./streaming-service-bridge
-RUN apk --no-cache add gstreamer-dev gst-plugins-base-dev 
-RUN apk --no-cache add build-base openssl-dev cargo libnice
+
 RUN cargo build --release -p gst-meet
 
 FROM docker.io/library/alpine:edge
-RUN apk update
-RUN apk --no-cache add curl
+RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
+ && apk --no-cache add curl \
+ && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav \
+ && apk --no-cache add libnice openssl
+
 RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
-RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav 
-RUN apk --no-cache add libnice openssl libnice
 
 RUN mkdir -p /home/appuser/.config/rclone/
 
