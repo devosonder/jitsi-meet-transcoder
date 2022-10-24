@@ -13,11 +13,8 @@ FROM docker.io/library/alpine:3.16 AS builder1
 
 COPY ./streaming-service-bridge  ./streaming-service-bridge
 WORKDIR ./streaming-service-bridge
-RUN apk --no-cache --update upgrade --ignore alpine-baselayout \
- && apk --no-cache add curl \
- && apk --no-cache add gstreamer-dev gst-plugins-base-dev \
- && apk --no-cache add build-base libnice-dev openssl-dev cargo
-
+RUN apk --no-cache add gstreamer-dev gst-plugins-base-dev 
+RUN apk --no-cache add build-base openssl-dev cargo libnice-dev
 RUN cargo build --release -p gst-meet
 
 FROM docker.io/library/alpine:3.16
@@ -27,12 +24,11 @@ RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
-RUN apk --update --no-cache upgrade --ignore alpine-baselayout \
- && apk --no-cache add curl \
- && apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav libnice-gstreamer \
- && apk --no-cache add libnice openssl
+RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav libnice-gstreamer
+RUN apk --no-cache add libnice openssl libnice
 
 RUN mkdir -p /home/appuser/.config/rclone/
+
 
 ENV RCLONE_VER=v1.59.1 \
     ARCH=amd64 \
