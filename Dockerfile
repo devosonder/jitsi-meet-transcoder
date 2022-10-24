@@ -14,7 +14,7 @@ FROM docker.io/library/alpine:edge AS builder1
 COPY ./streaming-service-bridge  ./streaming-service-bridge
 WORKDIR ./streaming-service-bridge
 RUN apk --no-cache add gstreamer-dev gst-plugins-base-dev 
-RUN apk --no-cache add build-base libnice-dev openssl-dev cargo libnice
+RUN apk --no-cache add build-base openssl-dev cargo libnice
 RUN cargo build --release -p gst-meet
 
 FROM docker.io/library/alpine:edge
@@ -25,7 +25,7 @@ RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
 RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav 
-RUN apk --no-cache add libnice openssl libnice-dev
+RUN apk --no-cache add libnice openssl libnice
 
 RUN mkdir -p /home/appuser/.config/rclone/
 
@@ -47,7 +47,7 @@ RUN cp rclone-v1.59.1-linux-amd64/rclone.1 /usr/share/man/man1/
 RUN rm -f rclone-v1.59.1-linux-amd64.zip
 RUN rm -r rclone-v1.59.1-linux-amd64
 ARG APP=/usr/src/app
-EXPOSE 8000
+EXPOSE 8080
 
 ENV TZ=Etc/UTC \
     APP_USER=appuser
