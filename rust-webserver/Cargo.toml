@@ -26,3 +26,5 @@ sha256 = "1.0.3"
 cargo-watch = "8.1.2"
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 libc = "0.2.132"
+rand = "0.8.5"
+humantime = "2.1.0"
