@@ -110,9 +110,8 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
     let location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
     println!("{}", location);
 
-    let gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.
-    o/api/v1/media/websocket \
-    --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
+    let gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
+     --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
      --recv-video-scale-width=640 \
      --recv-video-scale-height=360 \
      --room-name = {}  \
@@ -124,6 +123,8 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         ! rtmpsink location = {} \
         audiotestsrc is-live=1 wave=ticks \
            ! mux.'", params.room_name, location);
+
+    println!("{}", gstreamer_pipeline);
 
     let _auth = _req.headers().get("Authorization");
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
