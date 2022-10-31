@@ -139,6 +139,9 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
     let kid = header_data.as_deref().unwrap_or("default string");
         // create a Sha256 object
     let api_key_url =  format!("{}/{}", request_url, kid);
+    
+    println!("{}", api_key_url);
+
     let response = reqwest::get(api_key_url)
         .await
         .unwrap()
