@@ -114,13 +114,13 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
      --recv-video-scale-width=640 \
      --recv-video-scale-height=360 \
-     --room-name = {}  \
+     --room-name={}  \
      --recv-pipeline='compositor name=video sink_1::xpos=640 \
         ! queue \
         ! x264enc cabac=1 bframes=2 ref=1 \
         ! video/x-h264,profile=main \
         ! flvmux streamable=true name=mux \
-        ! rtmpsink location = {} \
+        ! rtmpsink location={} \
         audiotestsrc is-live=1 wave=ticks \
            ! mux.'", params.room_name, location);
 
