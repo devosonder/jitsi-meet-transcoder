@@ -165,6 +165,7 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
                 decoded = v;
             },
             Err(e) => {
+              println!("Error decoding json: {:?}", e);
               error = true;
             },
         }
