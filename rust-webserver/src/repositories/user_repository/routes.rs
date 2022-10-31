@@ -66,6 +66,13 @@ struct ResponseStop {
     started: bool
 }
 
+#[get("/healthz")]
+async fn get_health_status() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .body("Healthy!")
+}
+
 async fn send_data_to_pricing_service(room_name: String, action: String, authorization_header: String) {
     let mut map = HashMap::new();
     let st = SystemTime::now().into();
@@ -75,7 +82,7 @@ async fn send_data_to_pricing_service(room_name: String, action: String, authori
     map.insert("action", action);
     map.insert("type", "stream".to_owned());
 
-    let service_secret_key = match env::var_os("X-SERVICE-TOKEN") {
+    let service_secret_key = match env::var_os("X_SERVICE_TOKEN") {
         Some(v) => v.into_string().unwrap(),
         None => panic!("$X-SERVICE-TOKEN is not set")
     };
@@ -85,7 +92,7 @@ async fn send_data_to_pricing_service(room_name: String, action: String, authori
         headers.insert("X-SERVICE-TOKEN", service_secret_key.parse().unwrap());
 
     let client = reqwest::Client::new();
-    let res = client.post("https://api.sariska.io/api/v1/pricing/recording")
+    let res = client.post( env::var("RECORDING_SERVICE_URL").unwrap_or("none".to_string()))
         .headers(headers)
         .json(&map)
         .send()
@@ -216,5 +223,6 @@ async fn stop_recording(_req: HttpRequest, child_processes: web::Data<RwLock<App
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(start_recorging);
     cfg.service(stop_recording);
+    cfg.service(get_health_status);
 }
 
