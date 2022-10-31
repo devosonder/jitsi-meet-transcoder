@@ -144,6 +144,9 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         .unwrap()
         .text()
         .await;
+
+        println!("{:?}", response);
+
     let public_key  = match response {
         Ok(_publickey)=>_publickey,
         _ => "default string".to_string(),
