@@ -140,7 +140,6 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         // create a Sha256 object
     let api_key_url =  format!("{}/{}", request_url, kid);
     
-    println!("{}", api_key_url);
 
     let response = reqwest::get(api_key_url)
         .await
@@ -148,7 +147,6 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
         .text()
         .await;
 
-        println!("{:?}", response);
 
     let public_key  = match response {
         Ok(_publickey)=>_publickey,
@@ -158,9 +156,8 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
     let deserialized: PublicKey = serde_json::from_str(&public_key).unwrap();
     let decoded_claims = decode::<Claims>(
         &token,
-        &DecodingKey::from_rsa_components(&"deserialized.n", &deserialized.e),
+        &DecodingKey::from_rsa_components(&deserialized.n, &deserialized.e),
         &Validation::new(Algorithm::RS256));
-
         let decoded;
         let mut error = false;
         match decoded_claims {
