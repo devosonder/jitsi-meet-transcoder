@@ -12,7 +12,7 @@ use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://43.205.21.202:1935";
+static RTMP_OUT_LOCATION: &str = "rtmp://a0f32a67911bd43b08097a2a99e6eac6-b0099fdbb77fd73a.elb.ap-south-1.amazonaws.com:1935";
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
