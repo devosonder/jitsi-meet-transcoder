@@ -12,7 +12,7 @@ use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://srs-edge-service-lb-tcp.streaming:1935";
+static RTMP_OUT_LOCATION: &str = "rtmp://3.7.148.117:1935";
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
