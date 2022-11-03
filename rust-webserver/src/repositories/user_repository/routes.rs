@@ -12,7 +12,7 @@ use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://a0f32a67911bd43b08097a2a99e6eac6-b0099fdbb77fd73a.elb.ap-south-1.amazonaws.com:1935";
+static RTMP_OUT_LOCATION: &str = "rtmp://srs-edge-service-lb-tcp.streaming:1935";
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
@@ -114,15 +114,13 @@ async fn start_recorging(_req: HttpRequest, child_processes: web::Data<RwLock<Ap
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
      --recv-video-scale-width=640 \
      --recv-video-scale-height=360 \
-     --room-name={}  \
-     --recv-pipeline='compositor name=video sink_1::xpos=640 \
+     --room-name={} \
+     --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 ! mux. compositor name=video sink_1::xpos=640 \
         ! queue \
         ! x264enc cabac=1 bframes=2 ref=1 \
         ! video/x-h264,profile=main \
         ! flvmux streamable=true name=mux \
-        ! rtmpsink location={} \
-        audiotestsrc is-live=1 wave=ticks \
-           ! mux.'", params.room_name, location);
+        ! rtmpsink location={}'", params.room_name, location);
 
     println!("{}", gstreamer_pipeline);
 
