@@ -14,7 +14,3 @@
 ## Deployment 
  - please refer to Makefile
  
-![CI](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/CI/badge.svg)
-
-![Deploy](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/Deploy/badge.svg?branch=develop)
-
