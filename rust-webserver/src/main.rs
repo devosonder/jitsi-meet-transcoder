@@ -5,14 +5,14 @@ pub use repositories::RedisActor;
 pub use repositories::InfoCommandGet;
 pub use repositories::InfoCommandSet;
 pub use repositories::InfoCommandDel;
-
+use std::env;
 use std::{collections::HashMap, pin::Pin, sync::RwLock};
 use redis::{Client, aio::MultiplexedConnection};
 use actix::prelude::*;
 use actix::Message;
 
 impl RedisActor {
-    pub async fn new(redis_url: &'static str) -> Self {
+    pub async fn new(redis_url: String) -> Self {
         let client = Client::open(redis_url).unwrap();// not recommended
         let (conn, call) = client.get_multiplexed_async_connection().await.unwrap();
         actix_rt::spawn(call);
@@ -83,9 +83,10 @@ impl Actor for RedisActor {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let actor = RedisActor::new("redis://127.0.0.1:6379").await;
+    let redis_url: String = env::var("REDIS_URL_GSTREAMER_PIPELINE").unwrap_or("none".to_string());
+    let actor = RedisActor::new(redis_url).await;
     let addr = actor.start();
-
+    
     HttpServer::new(move || App::new()
     .app_data(web::Data::new(RwLock::new(AppState {
         map: HashMap::new(),
