@@ -1,4 +1,4 @@
-# lib-gst-meet server side rust implementation ( lib-jitsi-meet javascript library), it allows to record and stream jitsi meet conferences.
+### lib-gst-meet server side rust implementation ( lib-jitsi-meet javascript library), it allows to record and stream jitsi meet conferences.
 
 ![CI](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/CI/badge.svg)
 
