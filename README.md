@@ -1,9 +1,8 @@
-# actix-web-docker-example
+# lib-gst-meet server side rust implementation ( lib-jitsi-meet javascript library), it allows to record and stream jitsi meet conferences.
 
 ![CI](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/CI/badge.svg)
 
 ![Deploy](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/Deploy/badge.svg?branch=develop)
-
 
 
 ## Components 
