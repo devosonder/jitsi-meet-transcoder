@@ -11,5 +11,5 @@
  - Rclone
  - Redis
  - actix-web server
- - lib-gst-meet is server side rust implementation of ( lib-jitsi-meet javascript library )
- - autoscaling pipeline
+ - lib-gst-meet is server side rust implementation of lib-jitsi-meet javascript library
+ - autoscalable pipeline
