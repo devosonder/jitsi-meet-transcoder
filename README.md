@@ -4,6 +4,18 @@
 
 ![Deploy](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/Deploy/badge.svg?branch=develop)
 
+
+
+## Components 
+
+ - Gstreamer
+ - Rclone
+ - Redis
+ - actix-web server
+ - lib-gst-meet server side rust implementation lib-jitsi-meet javascript library
+ - autoscaling pipeline
+
+
 ## About 
 
 An example of how to package an actix-web project into a Docker container.
