@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 
 # actix
-actix-web = "4.0.0"
+actix-web = { version = "3.0.0" }
 actix-rt = "1.1.1"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
@@ -21,10 +21,13 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 futures = "0.3.4"
 async-trait = "0.1.57"
 reqwest = { version = "0.11", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
 sha256 = "1.0.3"
 cargo-watch = "8.1.2"
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 libc = "0.2.132"
 rand = "0.8.5"
 humantime = "2.1.0"
+redis = "0.15"
+actix = "0.10.0-alpha.3"
+tokio-compat-02 = "0.2.0"
+tokio = "=1.21.2"
