@@ -11,6 +11,9 @@
  - lib-gst-meet is server side rust implementation of lib-jitsi-meet javascript library
  - autoscalable pipeline
 
+## Deployment 
+ - please refer to Makefile
+ 
 ![CI](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/CI/badge.svg)
 
 ![Deploy](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/Deploy/badge.svg?branch=develop)
