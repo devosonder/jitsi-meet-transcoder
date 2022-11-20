@@ -273,6 +273,11 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     
     println!("{}", api_key_url);
 
+    let body = reqwest::get("https://www.rust-lang.org").await?
+    .text().await?;
+
+    println!("{}", kid);
+
     let response = reqwest::get(api_key_url)
         .await
         .unwrap()
