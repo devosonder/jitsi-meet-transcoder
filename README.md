@@ -1,23 +1,16 @@
-# actix-web-docker-example
+## Description
 
-![CI](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/CI/badge.svg)
+- lib-gst-meet is server side rust implementation of (lib-jitsi-meet for browser ), it allows to record and stream jitsi meet conferences without using headless chrome to save cost and resouces, it intercepts RTP packets and write to gstreamer to sink pad.  
 
-![Deploy](https://github.com/patrick-fitzgerald/actix-web-docker-example/workflows/Deploy/badge.svg?branch=develop)
+## Components 
 
-## About 
+ - Gstreamer
+ - Rclone to upload recordings to (AWS, GCP, AZURE and others)
+ - Redis
+ - actix-web server
+ - lib-gst-meet is rust implementation of lib-jitsi-meet javascript library for browser
+ - autoscalable pipeline
 
-An example of how to package an actix-web project into a Docker container.
-
-The Docker image is built using Github Actions.
-
-## Usage
-
-```sh
-docker build -t actix-web-docker-example .
-docker run -p 8080:8080 actix-web-docker-example
-```
-
-## Dependencies
-
-* [Actix Web](https://actix.rs/) - A powerful, pragmatic, and extremely fast web framework for Rust
-
+## Deployment 
+ - please refer to Makefile
+ 
