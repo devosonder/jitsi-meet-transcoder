@@ -18,7 +18,6 @@ use actix::Message;
 use std::panic;
 
 
-
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
 pub struct InfoCommandGet {
@@ -50,7 +49,9 @@ pub struct RedisActor {
 }
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://3.7.148.117:1935";
+static RTMP_OUT_LOCATION_VIDEO: &str = "rtmp://3.7.148.117:1935";
+static RTMP_OUT_LOCATION_AUDIO: &str = "rtmp://3.7.148.117:1935";
+
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
@@ -80,9 +81,20 @@ struct PublicKey {
     kty: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Params {
     room_name: String,
+    is_audio: Option<bool>,
+    is_vod: Option<bool>,
+    is_recording: Option<bool>,
+    stream_urls: Option<Vec<String>>,
+    stream_keys: Option<Vec<StreamKeyDict>>
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+struct StreamKeyDict {
+    stream_key: String,
+    stream_value: String,
 }
 
 fn print_type_of<T>(_: &T) {
@@ -90,15 +102,25 @@ fn print_type_of<T>(_: &T) {
 }
 
 #[derive(Serialize)]
-struct ResponseStart {
+struct ResponseAudioStart {
     started: bool,
     hls_url:  String,
     dash_url: String,
-    mp3_url: String,
+    rtmp_url: String,
     aac_url: String,
+    srt_url: String,
+    hds_url: String,
+}
+
+#[derive(Serialize)]
+struct ResponseVideoStart {
+    started: bool,
+    hls_url:  String,
+    dash_url: String,
     rtmp_url: String,
     flv_url: String,
     srt_url: String,
+    hds_url: String,
 }
 
 #[derive(Serialize)]
@@ -169,6 +191,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         // AssertUnwindSafe moved to the future
         std::panic::AssertUnwindSafe(run_async()).catch_unwind().await
     }.await;        
+
     match result {
         Ok(Ok(Ok(Some(value))))  => {
             let obj = ResponseRecordingAlreadyStarted {
@@ -182,15 +205,44 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(Err(_))=>(),
         Ok(Ok(Err(_)))=>()
     }
+
     let comm = InfoCommandSet {
         command: "SET".to_string(),
         arg2: params.room_name.to_string(),
         arg: format!("production::room_key::{}", params.room_name).to_string()
     };
     redis_actor.send(comm).await;
+
+    let mut location;
     
-    let location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
-    println!("{}", location);
+    print!("{:?} params.is_audio ", params.is_audio );
+
+    if  let None = params.is_audio  {
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION_VIDEO, app, stream);
+        location = format!("{}?vhost=flv.sariska.io", location);
+    } else {
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
+        location = format!("{}?vhost=aac.sariska.io", location);
+    }
+
+    let encoded = serde_json::to_string(&Params {
+        is_audio: params.is_audio,
+        is_vod: params.is_vod,
+        room_name: params.room_name.clone(),
+        is_recording: params.is_recording.clone(),
+        stream_keys: params.stream_keys.clone(),
+        stream_urls: params.stream_urls.clone()
+    });
+    
+    let encoded = match encoded {
+        Ok(v) => v,
+        _ => "test".to_owned()
+    };
+
+    println!("{:?}", encoded);
+
+    location = format!("{}&param={}", location, encoded);
+    println!("{:?}", location);
 
     let gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
@@ -204,10 +256,9 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         ! flvmux streamable=true name=mux \
         ! rtmpsink location={}'", params.room_name, location);
 
-    println!("{}", gstreamer_pipeline);
+    // println!("{}", gstreamer_pipeline);
 
     let _auth = _req.headers().get("Authorization");
-    
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
     let token = _split[1].trim();
     let header  =  decode_header(&token);
@@ -254,23 +305,39 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         .spawn()
         .expect("failed to execute process");
         app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
-        // child_processes.insert(params.room_name.to_string(),child);
 
         send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-
-        let obj = create_response_start(app.clone(), stream.clone());
-        HttpResponse::Ok().json(obj)
+        if  let None = params.is_audio {
+            let obj = create_response_start_video(app.clone(), stream.clone());
+            HttpResponse::Ok().json(obj)
+        } else {
+            let obj = create_response_start_audio(app.clone(), stream.clone());
+            HttpResponse::Ok().json(obj)
+        }
 }
 
-fn create_response_start(app :String, stream: String) -> ResponseStart {
-    let obj = ResponseStart {
+fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
+    let obj = ResponseAudioStart {
         started: true,
-        hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
+        hds_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
+        hls_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
         dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
-        mp3_url: format!("https://edge.sariska.io/play/mp3/{}/{}.mp3",app, stream),
         aac_url: format!("https://edge.sariska.io/play/aac/{}/{}.aac", app, stream),
-        rtmp_url: format!("rtmp://a0f32a67911bd43b08097a2a99e6eac6-b0099fdbb77fd73a.elb.ap-south-1.amazonaws.com:1935/{}{}", app, stream),
-        flv_url: format!("https://edge.sariska.io/play/flv/{}/{}.flv", app, stream),
+        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}", app, stream),
+        srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request", app, stream),
+    };
+    obj
+}
+
+
+fn create_response_start_video(app :String, stream: String) -> ResponseVideoStart {
+    let obj = ResponseVideoStart {
+        started: true,
+        hds_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
+        hls_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
+        dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
+        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}", app, stream),
+        flv_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080/{}/{}.flv", app, stream),
         srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request", app, stream),
     };
     obj

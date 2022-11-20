@@ -1,7 +1,7 @@
 [package]
-name = "actix-web-docker-example"
+name = "rust-gstreamer-rclone"
 version = "0.1.0"
-authors = ["Patrick Fitzgerald <paddyfitz@gmail.com>"]
+authors = ["Brajendra Kumar <brajendra@sariska.io>"]
 edition = "2018"
 
 [dependencies]
