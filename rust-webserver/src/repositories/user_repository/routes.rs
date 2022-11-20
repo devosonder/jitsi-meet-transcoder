@@ -271,6 +271,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         // create a Sha256 object
     let api_key_url =  format!("{}/{}", request_url, kid);
     
+    println!("{}", api_key_url);
 
     let response = reqwest::get(api_key_url)
         .await
