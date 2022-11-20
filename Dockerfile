@@ -1,10 +1,10 @@
 
 FROM ekidd/rust-musl-builder:stable as builder
-RUN USER=root cargo new --bin actix-web-docker-example
+RUN USER=root cargo new --bin rust-gstreamer-rclone
 
-COPY ./rust-webserver  ./actix-web-docker-example
+COPY ./rust-webserver  ./rust-gstreamer-rclone
 
-WORKDIR ./actix-web-docker-example
+WORKDIR ./rust-gstreamer-rclone
 RUN cargo build --release
 RUN rm -r ./target/x86_64-unknown-linux-musl/release/deps
 RUN cargo build --release
@@ -60,10 +60,10 @@ RUN apk update \
 COPY ./rust-webserver/rclone.sh  /usr/src/app/
 COPY ./rust-webserver/rclone.conf  /home/appuser/.config/rclone/
 COPY --from=builder1 /streaming-service-bridge/target/release/gst-meet  /usr/src/app/
-COPY --from=builder /home/rust/src/actix-web-docker-example/target/x86_64-unknown-linux-musl/release/actix-web-docker-example ${APP}/actix-web-docker-example
+COPY --from=builder /home/rust/src/rust-gstreamer-rclone/target/x86_64-unknown-linux-musl/release/rust-gstreamer-rclone ${APP}/rust-gstreamer-rclone
 RUN chown -R $APP_USER:$APP_USER ${APP}
 USER $APP_USER
 WORKDIR ${APP}
 
 EXPOSE 8080
-CMD ["./actix-web-docker-example"]
+CMD ["./rust-gstreamer-rclone"]
