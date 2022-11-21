@@ -308,13 +308,16 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
 
         // send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-        if  let None = params.is_audio {
-            let obj = create_response_start_video(app.clone(), stream.clone());
-            HttpResponse::Ok().json(obj)
-        } else {
-            let obj = create_response_start_audio(app.clone(), stream.clone());
-            HttpResponse::Ok().json(obj)
-        }
+        match params.is_audio {
+            None => {
+                let obj = create_response_start_video(app.clone(), stream.clone());
+                HttpResponse::Ok().json(obj)
+             },
+             Some(i) => {
+                let obj = create_response_start_audio(app.clone(), stream.clone());
+                HttpResponse::Ok().json(obj)
+             },
+         }
 }
 
 fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
