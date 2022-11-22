@@ -304,14 +304,16 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
                 return HttpResponse::Unauthorized().json("{}");
             }
     }
-    
+
     let child = Command::new("sh")
     .arg("-c")
     .arg(gstreamer_pipeline)
     .spawn()
     .expect("failed to execute process");
+
     app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
-    send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
+    //send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
+   
     match params.is_audio {
         None => {
             let obj = create_response_start_video(app.clone(), stream.clone());
