@@ -292,19 +292,28 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
             }
     }
 
-    let child = Command::new("sh")
-    .arg("-c")
-    .arg(gstreamer_pipeline)
-    .spawn()
-    .expect("failed to execute process");
-    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
+    // let child = Command::new("sh")
+    // .arg("-c")
+    // .arg(gstreamer_pipeline)
+    // .spawn()
+    // .expect("failed to execute process");
+    // app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
+    
+    println!("here...............1");
+
     send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
+    println!("here...............2");
+
     match params.is_audio {
         None => {
+            println!("here...............3");
+
             let obj = create_response_start_video(app.clone(), stream.clone());
             HttpResponse::Ok().json(obj)
         },
         Some(i) => {
+            println!("here...............4");
+
             let obj = create_response_start_audio(app.clone(), stream.clone());
                 HttpResponse::Ok().json(obj)
             },
