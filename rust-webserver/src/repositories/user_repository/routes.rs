@@ -216,10 +216,10 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     if  let None = params.is_audio  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_VIDEO, app, stream);
-        location = format!("{}?vhost=flv.sariska.io", location);
+        // location = format!("{}?vhost=flv.sariska.io", location);
     } else {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
-        location = format!("{}?vhost=aac.sariska.io", location);
+        // location = format!("{}?vhost=aac.sariska.io", location);
     }
 
     let encoded = serde_json::to_string(&Params {
