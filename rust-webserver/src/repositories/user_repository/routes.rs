@@ -17,7 +17,7 @@ use redis::{Client, aio::MultiplexedConnection};
 use actix::Message;
 use std::panic;
 use minreq;
-
+use serde_json::Error;
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
@@ -28,7 +28,7 @@ pub struct InfoCommandGet {
 }
 
 
-#[derive(Message)]
+#[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
 pub struct InfoCommandSet {
     pub command: String,
@@ -36,7 +36,7 @@ pub struct InfoCommandSet {
     pub arg2: String
 }
 
-#[derive(Message)]
+#[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
 pub struct InfoCommandDel {
     pub command: String,
@@ -143,7 +143,7 @@ async fn get_health_status() -> HttpResponse {
         .body("Healthy!")
 }
 
-async fn send_data_to_pricing_service(room_name: String, action: String, authorization_header: String) {
+async fn send_data_to_pricing_service(room_name: String, action: String, authorization_header: String) -> serde_json::Result<()> {
     let mut map = HashMap::new();
     let st = SystemTime::now().into();
     let st_str: String=  humantime::format_rfc3339_seconds(st).to_string();
@@ -156,17 +156,13 @@ async fn send_data_to_pricing_service(room_name: String, action: String, authori
         Some(v) => v.into_string().unwrap(),
         None => panic!("$X-SERVICE-TOKEN is not set")
     };
-
-    let mut headers = HeaderMap::new();
-        headers.insert("Authorization", authorization_header.parse().unwrap());
-        headers.insert("X-SERVICE-TOKEN", service_secret_key.parse().unwrap());
-
-    let client = reqwest::Client::new();
-    let res = client.post( env::var("RECORDING_SERVICE_URL").unwrap_or("none".to_string()))
-        .headers(headers)
-        .json(&map)
-        .send()
-        .await;
+    let json = serde_json::to_string(&map)?;
+    let response = minreq::post(env::var("RECORDING_SERVICE_URL").unwrap_or("none".to_string()))
+    .with_header("Authorization", authorization_header)
+    .with_header("X-SERVICE-TOKEN", service_secret_key)
+    .with_body(json)
+    .send();
+    Ok(())
 }
 
 #[get("/startRecording")]
@@ -264,7 +260,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let token = _split[1].trim();
     let header  =  decode_header(&token);
     let request_url = env::var("SECRET_MANAGEMENT_SERVICE_PUBLIC_KEY_URL").unwrap_or("none".to_string());
-
     let header_data = match header {
         Ok(_token) => _token.kid,
         Err(_e) => None,
@@ -279,18 +274,10 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
             Ok(response)=>{
                 let public_key = response.as_str().unwrap_or("default");
                 let deserialized: PublicKey = serde_json::from_str(&public_key).unwrap();
-
-                // let deserialized = match result {
-                //     Ok(res) => res,
-                //     Err(_) => { 
-                //         return HttpResponse::Unauthorized().json("{}")
-                //     },
-                // };
                 let decoded_claims = decode::<Claims>(
                     &token,
                     &DecodingKey::from_rsa_components(&deserialized.n, &deserialized.e),
         &Validation::new(Algorithm::RS256));
-        
                     match decoded_claims {
                         Ok(v) => {
                         },
@@ -310,10 +297,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     .arg(gstreamer_pipeline)
     .spawn()
     .expect("failed to execute process");
-
     app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
-    //send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-   
+    send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
     match params.is_audio {
         None => {
             let obj = create_response_start_video(app.clone(), stream.clone());
