@@ -27,25 +27,6 @@ RUN apk --no-cache add unzip
 RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav libnice-gstreamer
 RUN apk --no-cache add libnice openssl
 
-RUN mkdir -p /home/appuser/.config/rclone/
-
-
-ENV RCLONE_VER=v1.59.1 \
-    ARCH=amd64 \
-    SUBCMD="" \
-    CONFIG="--config /usr/src/app/rclone.conf" \
-    PARAMS=""
-
-RUN curl -O "https://downloads.rclone.org/v1.59.1/rclone-v1.59.1-linux-amd64.zip"
-RUN unzip rclone-v1.59.1-linux-amd64.zip
-RUN cd rclone-v1.59.1-linux-amd64
-RUN cp rclone-v1.59.1-linux-amd64/rclone /usr/bin/
-RUN chown root:root /usr/bin/rclone
-RUN chmod 755 /usr/bin/rclone
-RUN mkdir -p /usr/share/man/man1
-RUN cp rclone-v1.59.1-linux-amd64/rclone.1 /usr/share/man/man1/
-RUN rm -f rclone-v1.59.1-linux-amd64.zip
-RUN rm -r rclone-v1.59.1-linux-amd64
 ARG APP=/usr/src/app
 
 ENV TZ=Etc/UTC \
@@ -57,8 +38,6 @@ RUN addgroup -S $APP_USER \
 RUN apk update \
     && apk add --no-cache ca-certificates tzdata \
     && rm -rf /var/cache/apk/*
-COPY ./rust-webserver/rclone.sh  /usr/src/app/
-COPY ./rust-webserver/rclone.conf  /home/appuser/.config/rclone/
 COPY --from=builder1 /streaming-service-bridge/target/release/gst-meet  /usr/src/app/
 COPY --from=builder /home/rust/src/rust-gstreamer-rclone/target/x86_64-unknown-linux-musl/release/rust-gstreamer-rclone ${APP}/rust-gstreamer-rclone
 RUN chown -R $APP_USER:$APP_USER ${APP}
