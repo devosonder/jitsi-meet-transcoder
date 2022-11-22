@@ -5,7 +5,6 @@
 ## Components 
 
  - Gstreamer
- - Rclone to upload recordings to (AWS, GCP, AZURE and others)
  - Redis
  - actix-web server
  - lib-gst-meet is rust implementation of lib-jitsi-meet javascript library for browser
