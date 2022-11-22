@@ -16,6 +16,7 @@ use reqwest::header::{HeaderMap};
 use redis::{Client, aio::MultiplexedConnection};
 use actix::Message;
 use std::panic;
+use minreq;
 
 
 #[derive(Message, Debug)]
@@ -256,13 +257,14 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         ! flvmux streamable=true name=mux \
         ! rtmpsink location={}'", params.room_name, location);
 
-    // println!("{}", gstreamer_pipeline);
+    println!("{}", gstreamer_pipeline);
 
     let _auth = _req.headers().get("Authorization");
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
     let token = _split[1].trim();
     let header  =  decode_header(&token);
     let request_url = env::var("SECRET_MANAGEMENT_SERVICE_PUBLIC_KEY_URL").unwrap_or("none".to_string());
+
     let header_data = match header {
         Ok(_token) => _token.kid,
         Err(_e) => None,
@@ -270,54 +272,56 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let kid = header_data.as_deref().unwrap_or("default string");
         // create a Sha256 object
     let api_key_url =  format!("{}/{}", request_url, kid);
+    println!("{:?}", api_key_url);
+
+    let response = minreq::get(api_key_url).send();
+    match response {
+            Ok(response)=>{
+                let public_key = response.as_str().unwrap_or("default");
+                let deserialized: PublicKey = serde_json::from_str(&public_key).unwrap();
+
+                // let deserialized = match result {
+                //     Ok(res) => res,
+                //     Err(_) => { 
+                //         return HttpResponse::Unauthorized().json("{}")
+                //     },
+                // };
+                let decoded_claims = decode::<Claims>(
+                    &token,
+                    &DecodingKey::from_rsa_components(&deserialized.n, &deserialized.e),
+        &Validation::new(Algorithm::RS256));
+        
+                    match decoded_claims {
+                        Ok(v) => {
+                        },
+                        Err(e) => {
+                        println!("Error decoding json: {:?}", e);
+                        return HttpResponse::Unauthorized().json("{}");
+                        },
+                    }
+            },
+            _=>{
+                return HttpResponse::Unauthorized().json("{}");
+            }
+    }
     
-    println!("{}", api_key_url);
-
-    // let response = reqwest::get(api_key_url)
-    //     .await
-    //     .unwrap()
-    //     .text()
-    //     .await;
-
-
-    // let public_key  = match response {
-    //     Ok(_publickey)=>_publickey,
-    //     _ => "default string".to_string(),
-    // };
-
-    // let deserialized: PublicKey = serde_json::from_str(&public_key).unwrap();
-    // let decoded_claims = decode::<Claims>(
-    //     &token,
-    //     &DecodingKey::from_rsa_components(&deserialized.n, &deserialized.e),
-    //     &Validation::new(Algorithm::RS256));
-
-    //     match decoded_claims {
-    //         Ok(v) => {
-    //         },
-    //         Err(e) => {
-    //           println!("Error decoding json: {:?}", e);
-    //           return HttpResponse::Unauthorized().json("{}");
-    //         },
-    //     }
-
-        let child = Command::new("sh")
-        .arg("-c")
-        .arg(gstreamer_pipeline)
-        .spawn()
-        .expect("failed to execute process");
-        app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
-
-        // send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-        match params.is_audio {
-            None => {
-                let obj = create_response_start_video(app.clone(), stream.clone());
+    let child = Command::new("sh")
+    .arg("-c")
+    .arg(gstreamer_pipeline)
+    .spawn()
+    .expect("failed to execute process");
+    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
+    send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
+    match params.is_audio {
+        None => {
+            let obj = create_response_start_video(app.clone(), stream.clone());
+            HttpResponse::Ok().json(obj)
+        },
+        Some(i) => {
+            let obj = create_response_start_audio(app.clone(), stream.clone());
                 HttpResponse::Ok().json(obj)
-             },
-             Some(i) => {
-                let obj = create_response_start_audio(app.clone(), stream.clone());
-                HttpResponse::Ok().json(obj)
-             },
-         }
+            },
+        }
 }
 
 fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
