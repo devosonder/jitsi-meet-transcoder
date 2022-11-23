@@ -213,13 +213,12 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let mut location;
     
     print!("{:?} params.is_audio ", params.is_audio );
-
     if  let None = params.is_audio  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_VIDEO, app, stream);
-        // location = format!("{}?vhost=flv.sariska.io", location);
+        location = format!("{}?vhost=flv.sariska.io", location);
     } else {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
-        // location = format!("{}?vhost=aac.sariska.io", location);
+        location = format!("{}?vhost=aac.sariska.io", location);
     }
 
     let encoded = serde_json::to_string(&Params {
@@ -238,8 +237,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     println!("{:?}", encoded);
 
-    // location = format!("{}&param={}", location, encoded);
-    // println!("{:?}", location);
+    location = format!("{}&param={}", location, encoded);
+    println!("{:?}", location);
 
     let gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
@@ -293,13 +292,16 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     }
 
     let child = Command::new("sh")
+    .stdin(Stdio::null())
+    .stdout(Stdio::null())
     .arg("-c")
     .arg(gstreamer_pipeline)
     .spawn()
     .expect("failed to execute process");
-    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
 
+    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
     send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
+    
     match params.is_audio {
         None => {
             let obj = create_response_start_video(app.clone(), stream.clone());
