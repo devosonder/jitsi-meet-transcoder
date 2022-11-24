@@ -9,7 +9,7 @@ use std::f32::consts::E;
 use actix_web::{get, web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode ,decode_header,  Algorithm, DecodingKey, Validation};
-use async_process::Command;
+use async_process::{ Command, Stdio };
 use std::time::{SystemTime};
 use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
@@ -43,6 +43,13 @@ pub struct InfoCommandDel {
     pub arg: String
 }
 
+#[derive(Message, Debug)]
+#[rtype(result = "Result<Option<String>, redis::RedisError>")]
+pub struct InfoCommandPublish {
+    pub command: String,
+    pub channel: String,
+    pub message: String
+}
 
 #[derive(Clone)]
 pub struct RedisActor {
@@ -136,6 +143,16 @@ struct ResponseRecordingAlreadyStarted {
     message: String,
 }
 
+
+
+#[derive(Serialize, Deserialize)]
+pub struct SetRoomInfo {
+    pub hostname: String,
+    pub process_id: String,
+    pub room_name: String,
+}
+
+
 #[get("/healthz")]
 async fn get_health_status() -> HttpResponse {
     HttpResponse::Ok()
@@ -202,13 +219,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(Err(_))=>(),
         Ok(Ok(Err(_)))=>()
     }
-
-    let comm = InfoCommandSet {
-        command: "SET".to_string(),
-        arg2: params.room_name.to_string(),
-        arg: format!("production::room_key::{}", params.room_name).to_string()
-    };
-    redis_actor.send(comm).await;
 
     let mut location;
     
@@ -293,12 +303,26 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     let child = Command::new("sh")
     .arg("-c")
-    .arg(gstreamer_pipeline)
+    .arg("ls")
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
     .spawn();
-    
-    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.unwrap().id().to_string());
+
+    let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
+    let room_info = SetRoomInfo {
+        room_name: params.room_name.to_string(),
+        process_id: child.unwrap().id().to_string(),
+        hostname: hostname
+    };
+
+    let comm = InfoCommandSet {
+        command: "SET".to_string(),
+        arg2: serde_json::to_string(&room_info).unwrap(),
+        arg: format!("production::room_key::{}", params.room_name).to_string()
+    };
+    redis_actor.send(comm).await;
     send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-    
+   
     match params.is_audio {
         None => {
             let obj = create_response_start_video(app.clone(), stream.clone());
@@ -324,7 +348,6 @@ fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStar
     obj
 }
 
-
 fn create_response_start_video(app :String, stream: String) -> ResponseVideoStart {
     let obj = ResponseVideoStart {
         started: true,
@@ -344,12 +367,12 @@ async fn stop_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState>
     let _auth = _req.headers().get("Authorization");
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
     let token = _split[1].trim();
-
     let mut redis_actor = &app_state.read().unwrap().conn;
 
-    let comm = InfoCommandDel {
-        command: "DEL".to_string(),
+    let comm = InfoCommandGet {
+        command: "GET".to_string(),
         arg: format!("production::room_key::{}", params.room_name).to_string(),
+        arg2: None,
     };
     
     let mut run_async = || async move {
@@ -359,16 +382,31 @@ async fn stop_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState>
     let result = async move {
         // AssertUnwindSafe moved to the future
         std::panic::AssertUnwindSafe(run_async()).catch_unwind().await
-    }.await;
-    
-    println!("{:?}", result);
+    }.await;        
 
-    let child_ids = &app_state.read().unwrap().map;
-    let child_os_id = child_ids.get(&params.room_name.to_string());
-    let my_int = child_os_id.unwrap().parse::<i32>().unwrap();
-    unsafe {
-        kill(my_int, SIGTERM);
-    }
+    match result {
+        Ok(Ok(Ok(Some(value))))  => {
+           let room_info: SetRoomInfo = serde_json::from_str(&value).unwrap();
+           let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
+           if room_info.hostname == hostname {
+                let my_int = room_info.process_id.parse::<i32>().unwrap();
+                unsafe {
+                    kill(my_int, SIGTERM);
+                }
+           } else {
+                let comm = InfoCommandPublish {
+                    command: "PUBLISH".to_string(),
+                    channel: "sariska_channel".to_string(),
+                    message: value
+                };
+                redis_actor.send(comm).await;
+           }
+        },
+        Ok(Ok(Ok(None))) => (),
+        Err(_)=> (),
+        Ok(Err(_))=>(),
+        Ok(Ok(Err(_)))=>()
+    };
     send_data_to_pricing_service(params.room_name.to_string(), "stop".to_owned(), token.to_owned()).await;
     let obj = ResponseStop {
         started: false,

@@ -1,21 +1,50 @@
 use actix_web::{get, web, App, HttpServer, Responder};
 mod repositories;
+use redis::AsyncCommands;
+use redis::ControlFlow;
+use redis::PubSubCommands;
 pub use repositories::AppState;
 pub use repositories::RedisActor;
 pub use repositories::InfoCommandGet;
 pub use repositories::InfoCommandSet;
 pub use repositories::InfoCommandDel;
+pub use repositories::InfoCommandPublish;
+pub use repositories::SetRoomInfo;
 use std::env;
 use std::{collections::HashMap, pin::Pin, sync::RwLock};
 use redis::{Client, aio::MultiplexedConnection};
 use actix::prelude::*;
 use actix::Message;
+use libc::{kill, SIGTERM};
+use serde_json::Error;
+
+
+#[derive(Message, Debug)]
+#[rtype(result = "Result<Option<String>, redis::RedisError>")]
+pub struct InfoCommandSubscribe {
+    command: String,
+}
 
 impl RedisActor {
     pub async fn new(redis_url: String) -> Self {
         let client = Client::open(redis_url).unwrap();// not recommended
         let (conn, call) = client.get_multiplexed_async_connection().await.unwrap();
         actix_rt::spawn(call);
+        let mut con = client.get_connection().unwrap();
+
+       let _ :() =  con.subscribe(&["sariska_channel"], |msg| {
+            let ch = msg.get_channel_name();
+            let payload: String = msg.get_payload().unwrap();
+            let decoded: SetRoomInfo  = serde_json::from_str(&payload).unwrap();
+            let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
+            if decoded.hostname == hostname {
+                let my_int = decoded.process_id.parse::<i32>().unwrap();
+                unsafe {
+                    kill(my_int, SIGTERM);
+                }
+            }
+            return ControlFlow::Continue;
+        }).unwrap();
         RedisActor { conn }
     }
 }
@@ -76,6 +105,27 @@ impl Handler<InfoCommandDel> for RedisActor {
     }
 }
 
+
+
+impl Handler<InfoCommandPublish> for RedisActor {
+    
+    type Result = ResponseFuture<Result<Option<String>, redis::RedisError>>;
+
+    fn handle(&mut self, _msg: InfoCommandPublish, _: &mut Self::Context) ->Self::Result {
+        let mut con = self.conn.clone();
+        let mut cmd = redis::cmd(&_msg.command);
+        let mut pipe = redis::pipe();
+        let fut = async move {
+            pipe.cmd("publish")
+            .arg(_msg.channel)
+            .arg(_msg.message)
+            .ignore();
+            return pipe.query_async(&mut con).await; 
+        };
+        Box::pin(fut)
+    }
+}
+
 impl Actor for RedisActor {
     type Context = Context<Self>;
 }
@@ -86,7 +136,6 @@ async fn main() -> std::io::Result<()> {
     let redis_url: String = env::var("REDIS_URL_GSTREAMER_PIPELINE").unwrap_or("none".to_string());
     let actor = RedisActor::new(redis_url).await;
     let addr = actor.start();
-    
     HttpServer::new(move || App::new()
     .app_data(web::Data::new(RwLock::new(AppState {
         map: HashMap::new(),
