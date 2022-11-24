@@ -145,7 +145,7 @@ struct ResponseRecordingAlreadyStarted {
 
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetRoomInfo {
     pub hostname: String,
     pub process_id: String,
@@ -196,15 +196,17 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         arg: format!("production::room_key::{}", params.room_name).to_string(),
         arg2: None,
     };
-    
+    println!("here1");
     let mut run_async = || async move {
         redis_actor.send(comm).await
     };
+    println!("here2");
 
     let result = async move {
         // AssertUnwindSafe moved to the future
         std::panic::AssertUnwindSafe(run_async()).catch_unwind().await
     }.await;        
+    println!("here3");
 
     match result {
         Ok(Ok(Ok(Some(value))))  => {
@@ -219,6 +221,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(Err(_))=>(),
         Ok(Ok(Err(_)))=>()
     }
+    println!("here4");
 
     let mut location;
     
@@ -230,6 +233,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
         location = format!("{}?vhost=aac.sariska.io", location);
     }
+    println!("here5");
 
     let encoded = serde_json::to_string(&Params {
         is_audio: params.is_audio,
@@ -246,6 +250,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     };
 
     println!("{:?}", encoded);
+    println!("here6");
 
     location = format!("{}&param={}", location, encoded);
     println!("{:?}", location);
@@ -263,6 +268,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         ! rtmpsink location={}'", params.room_name, location);
 
     println!("{}", gstreamer_pipeline);
+    println!("here7");
 
     let _auth = _req.headers().get("Authorization");
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
@@ -300,10 +306,11 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
                 return HttpResponse::Unauthorized().json("{}");
             }
     }
+    println!("here7");
 
     let child = Command::new("sh")
     .arg("-c")
-    .arg("ls")
+    .arg(gstreamer_pipeline)
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
     .spawn();
@@ -314,6 +321,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         process_id: child.unwrap().id().to_string(),
         hostname: hostname
     };
+    println!("here8");
 
     let comm = InfoCommandSet {
         command: "SET".to_string(),
@@ -388,7 +396,9 @@ async fn stop_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState>
         Ok(Ok(Ok(Some(value))))  => {
            let room_info: SetRoomInfo = serde_json::from_str(&value).unwrap();
            let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
+           println!("{:?}", room_info);
            if room_info.hostname == hostname {
+                println!("kill");
                 let my_int = room_info.process_id.parse::<i32>().unwrap();
                 unsafe {
                     kill(my_int, SIGTERM);
@@ -407,6 +417,21 @@ async fn stop_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState>
         Ok(Err(_))=>(),
         Ok(Ok(Err(_)))=>()
     };
+
+    let comm = InfoCommandDel {
+        command: "DEL".to_string(),
+        arg: format!("production::room_key::{}", params.room_name).to_string(),
+    };
+    
+    let mut run_async = || async move {
+        redis_actor.send(comm).await
+    };
+
+    let result = async move {
+        // AssertUnwindSafe moved to the future
+        std::panic::AssertUnwindSafe(run_async()).catch_unwind().await
+    }.await;
+    
     send_data_to_pricing_service(params.room_name.to_string(), "stop".to_owned(), token.to_owned()).await;
     let obj = ResponseStop {
         started: false,
