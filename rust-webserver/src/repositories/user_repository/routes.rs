@@ -9,7 +9,7 @@ use std::f32::consts::E;
 use actix_web::{get, web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode ,decode_header,  Algorithm, DecodingKey, Validation};
-use std::process::Command;
+use async_process::Command;
 use std::time::{SystemTime};
 use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
@@ -292,14 +292,11 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     }
 
     let child = Command::new("sh")
-    .stdin(Stdio::null())
-    .stdout(Stdio::null())
     .arg("-c")
     .arg(gstreamer_pipeline)
-    .spawn()
-    .expect("failed to execute process");
-
-    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.id().to_string());
+    .spawn();
+    
+    app_state.write().unwrap().map.insert(params.room_name.to_string(), child.unwrap().id().to_string());
     send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
     
     match params.is_audio {
