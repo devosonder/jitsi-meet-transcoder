@@ -311,7 +311,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let child = Command::new("sh")
     .arg("-c")
     .arg(gstreamer_pipeline)
-    .stdout(Stdio::piped())
     .spawn();
 
     let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
