@@ -21,7 +21,7 @@ use serde_json::Error;
 
 impl RedisActor {
     pub async fn new(redis_url: String) -> Self {
-        let client = Client::open(redis_url).unwrap();// not recommended
+        let client = Client::open(redis_url).unwrap();
         let (conn, call) = client.get_multiplexed_async_connection().await.unwrap();
         thread::spawn(move || {
             let mut con = client.get_connection().unwrap();
