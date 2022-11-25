@@ -344,8 +344,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
     let obj = ResponseAudioStart {
         started: true,
-        hds_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
-        hls_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
+        hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
+        hds_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
         dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
         aac_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080{}/{}.aac?vhost=aac.sariska.io", app, stream),
         rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}?vhost=aac.sariska.io", app, stream),
@@ -357,8 +357,8 @@ fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStar
 fn create_response_start_video(app :String, stream: String) -> ResponseVideoStart {
     let obj = ResponseVideoStart {
         started: true,
-        hds_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
-        hls_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
+        hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
+        hds_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
         dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
         rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}?vhost=flv.sariska.io", app, stream),
         flv_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080/{}/{}.flv?vhost=flv.sariska.io", app, stream),
