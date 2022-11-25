@@ -230,11 +230,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         location = format!("{}?vhost=flv.sariska.io", location);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
-     --recv-video-scale-width=640 \
-     --recv-video-scale-height=360 \
      --room-name={} \
-     --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000
-        ! flvmux streamable=true name=mux \
+     --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 flvmux streamable=true name=mux \
         ! rtmpsink location={}'", params.room_name, location);
     } else {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
