@@ -92,6 +92,7 @@ struct PublicKey {
 #[derive(Debug, Deserialize, Serialize)]
 struct Params {
     room_name: String,
+    token: String,
     is_audio: Option<bool>,
     is_vod: Option<bool>,
     is_recording: Option<bool>,
@@ -190,6 +191,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let app: String =  Alphanumeric.sample_string(&mut rand::thread_rng(), 16).to_lowercase();
     let stream: String =  Alphanumeric.sample_string(&mut rand::thread_rng(), 16).to_lowercase();
     let mut redis_actor = &app_state.read().unwrap().conn;
+    let _auth = _req.headers().get("Authorization");
 
     let comm = InfoCommandGet {
         command: "GET".to_string(),
@@ -253,6 +255,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let encoded = serde_json::to_string(&Params {
         is_audio: params.is_audio,
         is_vod: params.is_vod,
+        token: _auth.unwrap().to_str().unwrap().to_string(),
         room_name: params.room_name.clone(),
         is_recording: params.is_recording.clone(),
         stream_keys: params.stream_keys.clone(),
@@ -272,7 +275,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     println!("{}", gstreamer_pipeline);
 
-    let _auth = _req.headers().get("Authorization");
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
     let token = _split[1].trim();
     let header  =  decode_header(&token);
