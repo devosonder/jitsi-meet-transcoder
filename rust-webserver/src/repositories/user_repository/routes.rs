@@ -92,7 +92,6 @@ struct PublicKey {
 #[derive(Debug, Deserialize, Serialize)]
 struct Params {
     room_name: String,
-    token: String,
     is_audio: Option<bool>,
     is_vod: Option<bool>,
     is_recording: Option<bool>,
@@ -223,11 +222,13 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     let mut location;
     let gstreamer_pipeline;
-    
+    let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
+    let token = _split[1].trim();
+
     print!("{:?} params.is_audio ", params.is_audio );
     if  let None = params.is_audio  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_VIDEO, app, stream);
-        location = format!("{}?vhost=flv.sariska.io", location);
+        location = format!("{}?vhost=flv.sariska.io&token={}", location, token);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
      --room-name={} \
@@ -235,7 +236,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         ! rtmpsink location={}'", params.room_name, location);
     } else {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
-        location = format!("{}?vhost=aac.sariska.io", location);
+        location = format!("{}?vhost=aac.sariska.io&token={}", location, token);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
      --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
      --recv-video-scale-width=640 \
@@ -252,7 +253,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let encoded = serde_json::to_string(&Params {
         is_audio: params.is_audio,
         is_vod: params.is_vod,
-        token: _auth.unwrap().to_str().unwrap().to_string(),
         room_name: params.room_name.clone(),
         is_recording: params.is_recording.clone(),
         stream_keys: params.stream_keys.clone(),
@@ -271,9 +271,6 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
 
     println!("{}", gstreamer_pipeline);
-
-    let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
-    let token = _split[1].trim();
     let header  =  decode_header(&token);
     let request_url = env::var("SECRET_MANAGEMENT_SERVICE_PUBLIC_KEY_URL").unwrap_or("none".to_string());
     let header_data = match header {
@@ -395,7 +392,6 @@ async fn stop_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState>
            let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
            println!("{:?}", room_info);
            if room_info.hostname == hostname {
-                println!("kill");
                 let my_int = room_info.process_id.parse::<i32>().unwrap();
                 unsafe {
                     kill(my_int, SIGTERM);
