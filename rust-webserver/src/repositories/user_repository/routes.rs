@@ -246,7 +246,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
         --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
         --room-name={} \
-        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 ! \
+        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 \
            ! flvmux streamable=true  name=mux \
            ! rtmpsink location={}'", params.room_name, location);
     }
