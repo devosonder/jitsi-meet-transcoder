@@ -57,8 +57,7 @@ pub struct RedisActor {
 }
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION_VIDEO: &str = "rtmp://3.7.148.117:1935";
-static RTMP_OUT_LOCATION_AUDIO: &str = "rtmp://3.7.148.117:1935";
+static RTMP_OUT_LOCATION: &str = "rtmp://3.7.148.117:1935";
 
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
@@ -227,8 +226,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
 
     print!("{:?} params.is_audio ", params.is_audio );
     if  let None = params.is_audio  {
-        location = format!("{}/{}/{}", RTMP_OUT_LOCATION_VIDEO, app, stream);
-        location = format!("{}?vhost=flv.sariska.io&token={}", location, token);
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
+        location = format!("{}?token={}", location, token);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
         --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
         --recv-video-scale-width=640 \
@@ -241,8 +240,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
            ! flvmux streamable=true name=mux \
            ! rtmpsink location={}'", params.room_name, location);
     } else {
-        location = format!("{}/{}/{}", RTMP_OUT_LOCATION_AUDIO, app, stream);
-        location = format!("{}?vhost=aac.sariska.io&token={}", location, token);
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
+        location = format!("{}?token={}", location, token);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
         --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
         --room-name={} \
@@ -325,30 +324,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     };
     redis_actor.send(comm).await;
     send_data_to_pricing_service(params.room_name.to_string(), "start".to_owned(), token.to_owned()).await;
-   
-    match params.is_audio {
-        None => {
-            let obj = create_response_start_video(app.clone(), stream.clone());
-            HttpResponse::Ok().json(obj)
-        },
-         Some(i) => {
-            let obj = create_response_start_audio(app.clone(), stream.clone());
-            HttpResponse::Ok().json(obj)
-        },
-    }
-}
-
-fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
-    let obj = ResponseAudioStart {
-        started: true,
-        hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
-        hds_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
-        dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
-        aac_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080{}/{}.aac?vhost=aac.sariska.io", app, stream),
-        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}?vhost=aac.sariska.io", app, stream),
-        srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request&vhost=aac.sariska.io", app, stream),
-    };
-    obj
+    let obj = create_response_start_video(app.clone(), stream.clone());
+    HttpResponse::Ok().json(obj)
 }
 
 fn create_response_start_video(app :String, stream: String) -> ResponseVideoStart {
@@ -357,9 +334,9 @@ fn create_response_start_video(app :String, stream: String) -> ResponseVideoStar
         hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
         hds_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
         dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
-        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}?vhost=flv.sariska.io", app, stream),
-        flv_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080/{}/{}.flv?vhost=flv.sariska.io", app, stream),
-        srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request&vhost=flv.sariska.io", app, stream),
+        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}", app, stream),
+        flv_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080/{}/{}.flv", app, stream),
+        srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request", app, stream),
     };
     obj
 }
