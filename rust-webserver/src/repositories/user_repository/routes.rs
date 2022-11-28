@@ -247,7 +247,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
         --room-name={} \
         --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 ! \
-           ! flvmux streamable=true  name=mux ! \
+           ! flvmux streamable=true  name=mux \
            ! rtmpsink location={}'", params.room_name, location);
     }
 
