@@ -334,7 +334,7 @@ fn create_response_start_video(app :String, stream: String) -> ResponseVideoStar
         hls_url: format!("https://edge.sariska.io/play/hls/{}/{}.m3u8", app, stream),
         hds_url: format!("https://edge.sariska.io/play/hds/{}/{}.f4m", app, stream),
         dash_url: format!("https://edge.sariska.io/play/dash/{}/{}.mpd", app, stream),
-        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}{}", app, stream),
+        rtmp_url: format!("rtmp://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:1935/{}/{}", app, stream),
         flv_url: format!("http://a1888dceaa234469683e47544f5f0d33-c703d14b936b1688.elb.ap-south-1.amazonaws.com:8080/{}/{}.flv", app, stream),
         srt_url: format!("srt://a23d4c35634a24dd8a0a932f57f40380-f2266220d83cf36b.elb.ap-south-1.amazonaws.com:10080?streamid=#!::r={}/{},m=request", app, stream),
     };
