@@ -1,12 +1,7 @@
 #!/bin/bash
 
-
-echo "qweqewqeqweqwe"
-
 RECORDINGS_DIR=$1
-echo "1"
 METADATA_JSON="$RECORDINGS_DIR/metadata.json"
-echo "2"
 
 [[ -z "$REFRESH_TOKEN" ]] && REFRESH_TOKEN=$(cat $METADATA_JSON | jq -r ".upload_credentials.r_token")
 [[ "$REFRESH_TOKEN" == "null" ]] && REFRESH_TOKEN=""

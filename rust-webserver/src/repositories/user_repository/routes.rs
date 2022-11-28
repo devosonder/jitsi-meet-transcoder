@@ -245,13 +245,10 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         location = format!("{}?vhost=aac.sariska.io&token={}", location, token);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
         --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
-        --recv-video-scale-width=640 \
-        --recv-video-scale-height=360 \
         --room-name={} \
-        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 ! mux. compositor name=video sink_1::xpos=640 \
-           ! queue \
-           ! x264enc cabac=1 bframes=2 ref=1 \
-           ! video/x-h264,profile=main \
+        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 ! \
+           ! flvmux name=mux ! \
+           ! rtmpsink location=rtmp://a.rtmp.youtube.com/live2/8bd7-bdf5-7u9y-cxaw-7kum
            ! flvmux streamable=true name=mux \
            ! rtmpsink location={}'", params.room_name, location);
     }
@@ -336,11 +333,11 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
             let obj = create_response_start_video(app.clone(), stream.clone());
             HttpResponse::Ok().json(obj)
         },
-        Some(i) => {
+         Some(i) => {
             let obj = create_response_start_audio(app.clone(), stream.clone());
-                HttpResponse::Ok().json(obj)
-            },
-        }
+            HttpResponse::Ok().json(obj)
+        },
+    }
 }
 
 fn create_response_start_audio(app :String, stream: String) -> ResponseAudioStart {
