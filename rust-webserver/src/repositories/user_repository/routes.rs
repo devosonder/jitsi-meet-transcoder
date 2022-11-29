@@ -225,30 +225,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let token = _split[1].trim();
 
     print!("{:?} params.is_audio ", params.is_audio );
-    if  let None = params.is_audio  {
-        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
-        location = format!("{}?token={}", location, token);
-        gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
-        --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
-        --recv-video-scale-width=640 \
-        --recv-video-scale-height=360 \
-        --room-name={} \
-        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 ! mux. compositor name=video sink_1::xpos=640 \
-           ! queue \
-           ! x264enc cabac=1 bframes=2 ref=1 \
-           ! video/x-h264,profile=main \
-           ! flvmux streamable=true name=mux \
-           ! rtmpsink location={}'", params.room_name, location);
-    } else {
-        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
-        location = format!("{}?token={}", location, token);
-        gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
-        --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
-        --room-name={} \
-        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 \
-           ! flvmux streamable=true  name=mux \
-           ! rtmpsink location={}'", params.room_name, location);
-    }
+
 
     let encoded = serde_json::to_string(&Params {
         is_audio: params.is_audio,
@@ -264,11 +241,30 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         _ => "test".to_owned()
     };
 
-    println!("{:?}", encoded);
-
-    location = format!("{}&param={}", location, encoded);
-    println!("{:?}", location);
-
+    if  let None = params.is_audio  {
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
+        location = format!("{}?token={}&param={}", location, token, encoded);
+        gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
+        --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
+        --recv-video-scale-width=640 \
+        --recv-video-scale-height=360 \
+        --room-name={} \
+        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 ! mux. compositor name=video sink_1::xpos=640 \
+           ! queue \
+           ! x264enc cabac=1 bframes=2 ref=1 \
+           ! video/x-h264,profile=main \
+           ! flvmux streamable=true name=mux \
+           ! rtmpsink location={}'", params.room_name, location);
+    } else {
+        location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
+        location = format!("{}?token={}&param={}", location, token, encoded);
+        gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \
+        --xmpp-domain=sariska.io  --muc-domain=muc.sariska.io \
+        --room-name={} \
+        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! audio/mpeg ! aacparse ! audio/mpeg, mpegversion=4 \
+           ! flvmux streamable=true  name=mux \
+           ! rtmpsink location={}'", params.room_name, location);
+    }
 
     println!("{}", gstreamer_pipeline);
     let header  =  decode_header(&token);
