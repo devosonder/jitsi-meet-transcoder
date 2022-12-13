@@ -57,7 +57,7 @@ pub struct RedisActor {
 }
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://3.7.148.117:1935";
+static RTMP_OUT_LOCATION: &str = "rtmp://a0d00d3de0e9d43a39172a2c437ad084-39df05d3c7cacf3e.elb.ap-south-1.amazonaws.com:1935";
 
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
