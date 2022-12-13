@@ -249,9 +249,8 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         --recv-video-scale-width=640 \
         --recv-video-scale-height=360 \
         --room-name={} \
-        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=128000 ! mux. compositor name=video sink_1::xpos=640 \
-           ! queue \
-           ! x264enc cabac=1 bframes=2 ref=1 \
+        --recv-pipeline='audiomixer name=audio ! voaacenc bitrate=96000 ! mux. compositor name=video sink_1::xpos=640 sink_2::xpos=0 sink_2::ypos=360 sink_3::xpos=640 sink_3::ypos=360 \
+           ! x264enc \
            ! video/x-h264,profile=main \
            ! flvmux streamable=true name=mux \
            ! rtmpsink location={}'", params.room_name, location);

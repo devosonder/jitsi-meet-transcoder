@@ -131,8 +131,6 @@ impl Actor for RedisActor {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("rrrr");
-
     let redis_url: String = env::var("REDIS_URL_GSTREAMER_PIPELINE").unwrap_or("none".to_string());
     let actor = RedisActor::new(redis_url).await;
     let addr = actor.start();
