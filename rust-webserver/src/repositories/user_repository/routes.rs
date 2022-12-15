@@ -57,8 +57,6 @@ pub struct RedisActor {
 }
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://a0d00d3de0e9d43a39172a2c437ad084-39df05d3c7cacf3e.elb.ap-south-1.amazonaws.com:1935";
-
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
@@ -117,6 +115,22 @@ struct ResponseAudioStart {
     aac_url: String,
     srt_url: String,
     hds_url: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct InnerData {
+    ip: String,
+    port: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SchedulerData {
+    data: Origin
+}
+
+#[derive(Serialize, Deserialize)]
+struct Origin {
+    origin: InnerData
 }
 
 #[derive(Serialize)]
@@ -240,6 +254,26 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(v) => v,
         _ => "test".to_owned()
     };
+
+
+    let response = minreq::get("http://simulcast-livestream.streaming/api/v1/clusters").send();
+    let RTMP_OUT_LOCATION;
+
+    match response {
+        Ok(response)=>{
+            let response_as_str = response.as_str().unwrap_or("{}");
+
+            println!("{}", response_as_str);
+
+            let deserialized: SchedulerData = serde_json::from_str(&response_as_str).unwrap();
+            println!("{:?}", deserialized);
+
+            RTMP_OUT_LOCATION = format!("rtmp://{}:{}", deserialized.data.origin.ip, deserialized.data.origin.port); 
+        },
+        _=>{
+            RTMP_OUT_LOCATION = "rtmp://srs-origin-0.socs:1935".to_owned()
+        }
+    }
 
     if  let None = params.is_audio  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
