@@ -18,6 +18,9 @@ use actix::Message;
 use std::panic;
 use minreq;
 use serde_json::Error;
+use std::net::*;
+use trust_dns_resolver::Resolver;
+use trust_dns_resolver::config::*;
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
@@ -57,8 +60,6 @@ pub struct RedisActor {
 }
 
 // need to change this later when load balancer giving all correct IP's
-static RTMP_OUT_LOCATION: &str = "rtmp://a0d00d3de0e9d43a39172a2c437ad084-39df05d3c7cacf3e.elb.ap-south-1.amazonaws.com:1935";
-
 use std::{collections::HashMap, sync::RwLock};
 use libc::{kill, SIGTERM};
 
@@ -240,6 +241,21 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(v) => v,
         _ => "test".to_owned()
     };
+
+
+    // Construct a new Resolver with default configuration options
+    let mut resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
+    // On Unix/Posix systems, this will read the /etc/resolv.conf
+    // let mut resolver = Resolver::from_system_conf().unwrap();
+    // Lookup the IP addresses associated with a name.
+    let mut response = resolver.lookup_ip("socs.streaming.svc.cluster.local.").unwrap();
+    // There can be many addresses associated with the name,
+    //  this can return IPv4 and/or IPv6 addresses
+    let address = response.iter().next().expect("no addresses returned!");
+    
+    let RTMP_OUT_LOCATION: &str = &format!("rtmp://{}:{}", address, "1935");
+
+    println!("{}", RTMP_OUT_LOCATION);
 
     if  let None = params.is_audio  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
