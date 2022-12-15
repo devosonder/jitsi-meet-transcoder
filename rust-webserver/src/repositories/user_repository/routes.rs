@@ -89,7 +89,7 @@ struct PublicKey {
 #[derive(Debug, Deserialize, Serialize)]
 struct Params {
     room_name: String,
-    is_audio: Option<bool>,
+    audio_only: Option<bool>,
     is_vod: Option<bool>,
     is_recording: Option<bool>,
     stream_urls: Option<Vec<String>>,
@@ -117,7 +117,7 @@ struct ResponseAudioStart {
     hds_url: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct InnerData {
     ip: String,
     port: String
@@ -128,7 +128,7 @@ struct SchedulerData {
     data: Origin
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Origin {
     origin: InnerData
 }
@@ -238,11 +238,11 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let _split: Vec<&str> = _auth.unwrap().to_str().unwrap().split("Bearer").collect();
     let token = _split[1].trim();
 
-    print!("{:?} params.is_audio ", params.is_audio );
+    print!("{:?} params.audio_only ", params.audio_only );
 
 
     let encoded = serde_json::to_string(&Params {
-        is_audio: params.is_audio,
+        audio_only: params.audio_only,
         is_vod: params.is_vod,
         room_name: params.room_name.clone(),
         is_recording: params.is_recording.clone(),
@@ -263,14 +263,14 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
             println!("{}", response_as_str);
             let deserialized: SchedulerData = serde_json::from_str(&response_as_str).unwrap();
             println!("{:?}", deserialized);
-            RTMP_OUT_LOCATION = format!("rtmp://{}:{}", deserialized.data.origin.ip, deserialized.data.origin.port); 
+            RTMP_OUT_LOCATION = format!("rtmp://{}:{}", deserialized.data.origin.ip, deserialized.data.origin.port.to_string()); 
         },
         _=>{
             RTMP_OUT_LOCATION = "rtmp://srs-origin-0.socs:1935".to_owned() // fallback in case origin cluster scheduler is down
         }
     }
 
-    if  let None = params.is_audio  {
+    if  let None = params.audio_only  {
         location = format!("{}/{}/{}", RTMP_OUT_LOCATION, app, stream);
         location = format!("{}?token={}&param={}", location, token, encoded);
         gstreamer_pipeline = format!("./gst-meet --web-socket-url=wss://api.sariska.io/api/v1/media/websocket \

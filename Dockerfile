@@ -24,7 +24,6 @@ RUN apk --no-cache add sed
 RUN apk add --no-cache --upgrade bash
 RUN apk --no-cache add jq
 RUN apk --no-cache add unzip
-RUN apk --no-cache youtube-dl
 RUN apk --no-cache add gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav libnice-gstreamer
 RUN apk --no-cache add libnice openssl
 
