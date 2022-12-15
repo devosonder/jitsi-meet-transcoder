@@ -120,7 +120,7 @@ struct ResponseAudioStart {
 #[derive(Serialize, Deserialize, Debug)]
 struct InnerData {
     ip: String,
-    port: String
+    port: u16
 }
 
 #[derive(Serialize, Deserialize, Debug)]
