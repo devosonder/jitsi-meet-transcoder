@@ -92,7 +92,18 @@ struct Params {
     room_name: String,
     audio_only: Option<bool>,
     is_vod: Option<bool>,
-    uuid: Optional<String>,
+    uuid: Option<String>,
+    is_recording: Option<bool>,
+    stream_urls: Option<Vec<String>>,
+    stream_keys: Option<Vec<StreamKeyDict>>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct RtmpParams {
+    room_name: String,
+    audio_only: Option<bool>,
+    is_vod: Option<bool>,
+    uuid: String,
     is_recording: Option<bool>,
     stream_urls: Option<Vec<String>>,
     stream_keys: Option<Vec<StreamKeyDict>>
@@ -241,12 +252,12 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let token = _split[1].trim();
 
     print!("{:?} params.audio_only ", params.audio_only );
-
-
-    let encoded = serde_json::to_string(&Params {
+    let my_uuid = Uuid::new_v4();
+    let new_uuid = format!("{}", my_uuid);
+    let encoded = serde_json::to_string(&RtmpParams {
         audio_only: params.audio_only,
         is_vod: params.is_vod,
-        uuid: Uuid::new_v4(),
+        uuid: new_uuid,
         room_name: params.room_name.clone(),
         is_recording: params.is_recording.clone(),
         stream_keys: params.stream_keys.clone(),
@@ -257,6 +268,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
         Ok(v) => v,
         _ => "test".to_owned()
     };
+
     let response = minreq::get(env::var("ORIGIN_CLUSTER_SCHEDULER").unwrap_or("none".to_string())).send();
     let RTMP_OUT_LOCATION;
 
