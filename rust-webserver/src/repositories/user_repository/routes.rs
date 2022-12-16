@@ -18,6 +18,7 @@ use actix::Message;
 use std::panic;
 use minreq;
 use serde_json::Error;
+use uuid::Uuid;
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
@@ -91,6 +92,7 @@ struct Params {
     room_name: String,
     audio_only: Option<bool>,
     is_vod: Option<bool>,
+    uuid: Optional<String>,
     is_recording: Option<bool>,
     stream_urls: Option<Vec<String>>,
     stream_keys: Option<Vec<StreamKeyDict>>
@@ -244,6 +246,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     let encoded = serde_json::to_string(&Params {
         audio_only: params.audio_only,
         is_vod: params.is_vod,
+        uuid: Uuid::new_v4(),
         room_name: params.room_name.clone(),
         is_recording: params.is_recording.clone(),
         stream_keys: params.stream_keys.clone(),
