@@ -9,7 +9,7 @@ use std::f32::consts::E;
 use actix_web::{get, web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode ,decode_header,  Algorithm, DecodingKey, Validation};
-use async_process::{ Command, Stdio };
+use std::process::{Command, Stdio};
 use std::time::{SystemTime};
 use rand::distributions::{Alphanumeric, DistString};
 use reqwest::header::{HeaderMap};
@@ -19,7 +19,8 @@ use std::panic;
 use minreq;
 use serde_json::Error;
 use uuid::Uuid;
-use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::thread;
 
 
 #[derive(Message, Debug)]
@@ -315,6 +316,7 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
     println!("{}", gstreamer_pipeline);
     let header  =  decode_header(&token);
     let request_url = env::var("SECRET_MANAGEMENT_SERVICE_PUBLIC_KEY_URL").unwrap_or("none".to_string());
+    
     let header_data = match header {
         Ok(_token) => _token.kid,
         Err(_e) => None,
@@ -346,20 +348,34 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
                 return HttpResponse::Unauthorized().json("{}");
             }
     }
-    let f = File::create("log.log").unwrap();
+  
     let child = Command::new("sh")
-    .stdout(std::process::Stdio::from(f))
     .arg("-c")
     .arg(gstreamer_pipeline)
-    .spawn();    
+    .stdout(Stdio::piped())
+    .spawn()
+    .expect("Failed to start ping process");
+    println!("Started process: {}", child.id());
+    
     let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
-
     let room_info = SetRoomInfo {
         room_name: params.room_name.to_string(),
-        process_id: child.unwrap().id().to_string(),
+        process_id: child.id().to_string().clone(),
         hostname: hostname
     };
 
+    thread::spawn(move || {
+        let mut f = BufReader::new(child.stdout.unwrap());
+        loop {
+            let mut buf = String::new();
+            match f.read_line(&mut buf) {
+                Ok(_) => {
+                    buf.as_str();
+                }
+                Err(e) => println!("an error!: {:?}", e),
+            }
+        }
+    });
     let comm = InfoCommandSet {
         command: "SET".to_string(),
         arg2: serde_json::to_string(&room_info).unwrap(),
