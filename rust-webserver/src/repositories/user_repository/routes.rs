@@ -19,6 +19,8 @@ use std::panic;
 use minreq;
 use serde_json::Error;
 use uuid::Uuid;
+use std::fs::File;
+
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Option<String>, redis::RedisError>")]
@@ -344,13 +346,14 @@ async fn start_recording(_req: HttpRequest, app_state: web::Data<RwLock<AppState
                 return HttpResponse::Unauthorized().json("{}");
             }
     }
-
+    let f = File::create("log.log").unwrap();
     let child = Command::new("sh")
+    .stdout(std::process::Stdio::from(f))
     .arg("-c")
     .arg(gstreamer_pipeline)
-    .spawn();
-
+    .spawn();    
     let hostname = env::var("HOSTNAME").unwrap_or("none".to_string());
+
     let room_info = SetRoomInfo {
         room_name: params.room_name.to_string(),
         process_id: child.unwrap().id().to_string(),
